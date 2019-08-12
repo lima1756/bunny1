@@ -1,23 +1,20 @@
 #!/usr/bin/env python
 
-import sys
 import os
 import re
 import cgi
 import urllib
-import urlparse
+import urllib.parse as urlparse
 import optparse
 import socket
 
-from urllib import quote as q
-from urllib import quote_plus as qp
+from urllib.parse import quote
+from urllib.parse import quote_plus
 from xml.sax.saxutils import escape
 
 import cherrypy
 from cherrypy import HTTPRedirect
 from cherrypy import expose
-
-from itertools import imap, izip, ifilter
 
 __doc__ = """
     bunny1 is a tool that lets you write smart bookmarks in python and then
@@ -169,7 +166,7 @@ class Bunny1(object):
         if method == "_debug":
             try:
                 return self.do_command(arg)
-            except HTTPRedirect, redir:
+            except HTTPRedirect as redir:
                 url = escape(redir.urls[0])
                 return "<code><b>bunny1</b> DEBUG: redirect to <a href='%s'>%s</a></code>" % (url, url)
 
@@ -224,7 +221,7 @@ class Bunny1(object):
                     url = decorator_method(url)
 
                 raise HTTPRedirect(url)
-            except Content, content:
+            except Content as content:
                 cherrypy.response.headers['Content-Type'] = content.content_type
                 return content.html
 
@@ -410,7 +407,7 @@ class Bunny1Commands(object):
     def list(self, arg):
         """show the list of methods you can use or search that list"""
 
-        def is_exposed_method( (name, method) ):
+        def is_exposed_method(name, method):
             return not name.startswith("__") and callable(method) \
                        and method.__doc__ and not getattr(method, "dont_expose", False) \
                        and not getattr(method, "unlisted", False)
@@ -419,7 +416,7 @@ class Bunny1Commands(object):
         if arg:
             arg_lower = arg.lower()
             html = ""
-            search_predicate = lambda (name, method): is_exposed_method((name,method)) and \
+            search_predicate = lambda name, method: is_exposed_method(name,method) and \
                                (arg_lower in name.lower() or arg_lower in method.__doc__)
         else:
             html = self._popularity_html(10) + "<hr ><b><i>All Commands</i></b><br />"
@@ -432,8 +429,8 @@ class Bunny1Commands(object):
         html += '<table>'
         html += ''.join(
             ['<tr><td><b>%s</b></td><td>%s</td></tr>' % (name, escape(method.__doc__)) for
-             name, method in ifilter(search_predicate,
-                                     izip(attr_names, imap(attr_getter, attr_names)))])
+             name, method in filter(search_predicate,
+                                     zip(attr_names, map(attr_getter, attr_names)))])
         html += '<table>'
 
         raise Content(html)
@@ -446,7 +443,7 @@ class Bunny1Commands(object):
 
     def g(self, arg):
         """does a google search.  we could fallback to yubnub, but why do an unnecessary roundtrip for something as common as a google search?"""
-        return GOOGLE_SEARCH_URL + q(arg)
+        return GOOGLE_SEARCH_URL + quote(arg)
 
     @unlisted
     def _hostname(self, arg):
@@ -506,12 +503,12 @@ class Bunny1Commands(object):
         if not bunny1_url.endswith("?"):
             bunny1_url += "?"
         save("bunny1testurl", bunny1_url)
-        raise HTTPRedirect(bunny1_url + q(arg))
+        raise HTTPRedirect(bunny1_url + quote(arg))
 
     def _t(self, arg):
         """tests a command on the most recently used bunny1 host.  usage: _t [command]"""
         bunny1_url = load("bunny1testurl")
-        raise HTTPRedirect(bunny1_url + q(arg))
+        raise HTTPRedirect(bunny1_url + quote(arg))
 
     def url(self, arg):
         """goes to the URL that is specified"""
@@ -566,7 +563,7 @@ class Bunny1Commands(object):
 
     @dont_expose
     def fallback(self, raw):
-        raise HTTPRedirect(self.fallback_url + q(raw))
+        raise HTTPRedirect(self.fallback_url + quote(raw))
 
 class DoesNotExist(Exception):
     pass
@@ -635,7 +632,7 @@ class PasswordProtectedBunny1(Bunny1):
 
         try:
             password = cherrypy.request.cookie["b1passwd"].value
-        except (AttributeError, KeyError), e:
+        except (AttributeError, KeyError) as e:
             return False
 
         return (password == self.password())
@@ -657,11 +654,11 @@ def main(b1, b1op=Bunny1OptionParser()):
         if options.test_command is not None:
             try:
                 b1._server_mode = "COMMAND_LINE"
-                print b1.do_command(options.test_command)
-            except HTTPRedirect, redir:
+                print(b1.do_command(options.test_command))
+            except HTTPRedirect as redir:
                 # the escape sequences make the output show up yellow on terminals
                 # in the case of a redirect to distinguish from content output
-                print "\033[33m%s:\033[0m %s" % (redir.__class__.__name__, redir)
+                print("\033[33m%s:\033[0m %s", (redir.__class__.__name__, redir))
         else:
 
             if options.port:
@@ -707,11 +704,11 @@ def main_cgi(b1):
             content_type = cherrypy.response.headers['Content-type']
         else:
             content_type = "text/html"
-        print "Content-type: %s\n" % content_type
-        print response
-    except cherrypy.HTTPRedirect, redir:
+        print("Content-type: %s\n", content_type)
+        print(response)
+    except cherrypy.HTTPRedirect as redir:
         url = redir.urls[0]
-        print "Location: " + url + "\n\n"
+        print("Location: " + url + "\n\n")
 
 # it doesn't really make sense to run this module as a standalone program
 # but it may be useful for testing in some rare cases

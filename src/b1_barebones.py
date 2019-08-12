@@ -6,16 +6,18 @@ A barebones bunny1 server that should be easy to modify for your own use
 """
 __date__ = "Thu Feb 12 09:05:40 PST 2009"
 
-import urlparse
+import urllib.parse as urlparse
+import subprocess
 
 import bunny1
 from bunny1 import cherrypy
 from bunny1 import Content
-from bunny1 import q
-from bunny1 import qp
+from bunny1 import quote
+from bunny1 import quote_plus
 from bunny1 import expose
 from bunny1 import dont_expose
 from bunny1 import escape
+from bunny1 import PRE
 from bunny1 import HTML
 
 class MyCommands(bunny1.Bunny1Commands):

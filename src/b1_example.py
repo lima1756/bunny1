@@ -6,17 +6,18 @@ An example bunny1 server with some common commands that you might want to use.
 """
 __version__ = "1.1"
 
-import urlparse
+import urllib.parse as urlparse
 import subprocess
 
 import bunny1
 from bunny1 import cherrypy
 from bunny1 import Content
-from bunny1 import q
-from bunny1 import qp
+from bunny1 import quote
+from bunny1 import quote_plus
 from bunny1 import expose
 from bunny1 import dont_expose
 from bunny1 import escape
+from bunny1 import PRE
 
 def is_int(x):
     """tells whether something can be turned into an int or not"""
@@ -34,7 +35,7 @@ class ExampleCommands(bunny1.Bunny1Commands):
 
     def hoo(self, arg):
         """a hoogle (haskell + google) search"""
-        return "http://haskell.org/hoogle/?q=%s" % q(arg)
+        return "http://haskell.org/hoogle/?q=%s" % quote(arg)
 
     def rickroll(self, arg):
         """You Just Got Rick Roll'd By bunny1!"""
@@ -47,7 +48,7 @@ class ExampleCommands(bunny1.Bunny1Commands):
     def fb(self, arg):
         """search www.facebook.com or go there"""
         if arg:
-            return "http://www.facebook.com/s.php?q=%s&init=q" % qp(arg)
+            return "http://www.facebook.com/s.php?q=%s&init=q" % quote_plus(arg)
         else:
             return "http://www.facebook.com/"
 
@@ -59,16 +60,16 @@ class ExampleCommands(bunny1.Bunny1Commands):
     def fbappabout(self, arg):
         """go to the about page for an app given a canvas name, app id, or api key"""
         if is_int(arg):
-            return "http://www.facebook.com/apps/application.php?id=%s" % qp(arg)
+            return "http://www.facebook.com/apps/application.php?id=%s" % quote_plus(arg)
         else:
             try:
                 # check to see if this is a valid API key
                 if len(arg) == 32:
                     int(arg, 16)
-                    return "http://www.facebook.com/apps/application.php?api_key=%s" % qp(arg)
+                    return "http://www.facebook.com/apps/application.php?api_key=%s" % quote_plus(arg)
             except ValueError:
                 pass
-            return "http://www.facebook.com/app_about.php?app_name=%s" % qp(arg)
+            return "http://www.facebook.com/app_about.php?app_name=%s" % quote_plus(arg)
 
     def fbdevforum(self, arg):
         """goes to the developers discussion forum.  still need to add search to this :/"""
@@ -80,13 +81,13 @@ class ExampleCommands(bunny1.Bunny1Commands):
 
     def fblucky(self, arg):
         """facebook i'm feeling lucky search, i.e. go directly to a person's profile"""
-        return "http://www.facebook.com/s.php?jtf&q=" + q(arg)
+        return "http://www.facebook.com/s.php?jtf&q=" + quote(arg)
     fbs = fblucky
 
     def yt(self, arg):
         """Searches YouTube or goes to it"""
         if arg:
-            return "http://www.youtube.com/results?search_query=%s&search_type=&aq=-1&oq=" % qp(arg)
+            return "http://www.youtube.com/results?search_query=%s&search_type=&aq=-1&oq=" % quote_plus(arg)
         else:
             return "http://www.youtube.com/"
 
@@ -97,7 +98,7 @@ class ExampleCommands(bunny1.Bunny1Commands):
     def ytd(self, arg):
         """Searches YouTube by date added instead of by relevance, or goes to youtube.com"""
         if arg:
-            return "http://www.youtube.com/results?search_query=%s&search_sort=video_date_uploaded" % qp(arg)
+            return "http://www.youtube.com/results?search_query=%s&search_sort=video_date_uploaded" % quote_plus(arg)
         else:
             return "http://www.youtube.com/"
 
@@ -113,14 +114,14 @@ class ExampleCommands(bunny1.Bunny1Commands):
     def wa(self, arg):
         """Searches Wolfram Alpha or goes there"""
         if arg:
-            return "http://www.wolframalpha.com/input/?i=%s" % qp(arg)
+            return "http://www.wolframalpha.com/input/?i=%s" % quote_plus(arg)
         else:
             return "http://www.wolframalpha.com/"
 
     def wikinvest(self, arg):
         """Searches Wikinvest or goes there"""
         if arg:
-            return "http://www.wikinvest.com/Special/Search?search=%s" % qp(arg)
+            return "http://www.wikinvest.com/Special/Search?search=%s" % quote_plus(arg)
         else:
             return "http://www.wikinvest.com/"
     # make wi and wv be aliasses for wikinvest
@@ -146,7 +147,7 @@ class ExampleCommands(bunny1.Bunny1Commands):
             return PRE(eval(arg))
         except Content:
             raise
-        except Exception, e:
+        except Exception as e:
             return PRE("<span style='color: red;'>" + escape(str(e)) + "</span>")
 
     def time(self, arg):
@@ -156,7 +157,7 @@ class ExampleCommands(bunny1.Bunny1Commands):
     def ya(self, arg):
         """searches Yahoo! Answers for an answer to your question"""
         if arg:
-            return "http://answers.yahoo.com/search/search_result?p=%s" % qp(arg)
+            return "http://answers.yahoo.com/search/search_result?p=%s" % quote_plus(arg)
         else:
             return "http://answers.yahoo.com/"
 
@@ -167,7 +168,7 @@ class ExampleCommands(bunny1.Bunny1Commands):
     def fbpbz(self, arg):
         """goes to Facebook Platform Bugzilla bugs"""
         if arg:
-            return "http://bugs.developers.facebook.com/buglist.cgi?quicksearch=%s" % qp(arg)
+            return "http://bugs.developers.facebook.com/buglist.cgi?quicksearch=%s" % quote_plus(arg)
         else:
             # if no arg, go to the main page of bugzilla
             return "http://bugs.developers.facebook.com/"
@@ -180,7 +181,7 @@ class ExampleCommands(bunny1.Bunny1Commands):
     # also, an example of a command that requires an argument
     def aim(self, arg):
         """use AOL Instant Messenger to IM a given screenname"""
-        return "aim:goim?screenname=%s" % qp(arg)
+        return "aim:goim?screenname=%s" % quote_plus(arg)
 
     # an example of showing content instead of redirecting and also
     # using content from the filesystem
